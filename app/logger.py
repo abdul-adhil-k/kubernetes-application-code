@@ -11,6 +11,11 @@ APP_NAME = os.getenv("APP_NAME", "fastapi-app")
 
 def get_logger(name: str = "app") -> logging.Logger:
     logger = logging.getLogger(name)
+
+    # Avoid adding duplicate handlers on repeated calls
+    if logger.handlers:
+        return logger
+
     logger.setLevel(logging.INFO)
 
     # stdout handler (always on)
@@ -21,11 +26,14 @@ def get_logger(name: str = "app") -> logging.Logger:
     logger.addHandler(stdout_handler)
 
     # Loki handler — pushes logs directly to Loki HTTP API
-    loki_handler = logging_loki.LokiHandler(
-        url=f"{LOKI_URL}/loki/api/v1/push",
-        tags={"app": APP_NAME},
-        version="1",
-    )
-    logger.addHandler(loki_handler)
+    try:
+        loki_handler = logging_loki.LokiHandler(
+            url=f"{LOKI_URL}/loki/api/v1/push",
+            tags={"app": APP_NAME},
+            version="1",
+        )
+        logger.addHandler(loki_handler)
+    except Exception as exc:
+        logger.warning("Failed to initialise Loki handler: %s", exc)
 
     return logger
