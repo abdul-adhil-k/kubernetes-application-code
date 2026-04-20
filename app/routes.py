@@ -16,6 +16,11 @@ def health():
     logger.info("Health check called")
     return {"status": "ok"}
 
+@router.get("/owner")
+def get_owner():
+    logger.info("Owner endpoint called")
+    return {"owner": "Your Name"}
+
 
 @router.get("/items")
 def list_items():
